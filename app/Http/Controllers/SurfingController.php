@@ -11,6 +11,8 @@ use App\function_model;
 use App\role_model;
 use App\log_model;
 
+use Carbon\Carbon;
+
 class SurfingController extends APIController
 {
     public function indexOp(Request $request){
@@ -22,6 +24,17 @@ class SurfingController extends APIController
         $permission = $this->getPermission("view", $user);
         if($permission) {
             $surfingList = $surfingModel->all();
+
+            $log = new log_model();
+            $log->Add(
+                array(
+                    'member_id' => $user->name,
+                        'function_id'=> "Viewed Surfing",
+                    'function_param'=>"",
+                    'detail_log'=>""
+                )
+            );
+
             return [
                 "status" => 201,
                 "result" => $surfingList
@@ -38,8 +51,8 @@ class SurfingController extends APIController
             return $this->responseUnauthorized();
         }
         $validator = Validator::make($request->all(), [
-            'user' => 'required|string',
-            'password' => 'required|string',
+            'name' => 'required|string',
+            'url' => 'required|string',
         ]);
 
         if ($validator->fails()) {
@@ -50,6 +63,17 @@ class SurfingController extends APIController
             if($permission) {
                 $surfingModel = new surfing_model();
                 $surfing = $surfingModel->add($request->all());
+
+                $log = new log_model();
+                $log->Add(
+                    array(
+                        'member_id' => $user->id,
+'function_id'=> "Added Surfing",
+                        'function_param'=>request('name'),
+                        'detail_log'=>""
+                    )
+                );
+
                 return $this->responseSuccess('Add successfully.');
             } else {
                 return [
@@ -66,8 +90,8 @@ class SurfingController extends APIController
             return $this->responseUnauthorized();
         }
         $validator = Validator::make($request->all(), [
-            'user' => 'required|string',
-            'password' => 'required|string'
+            'name' => 'required|string',
+            'url' => 'required|string'
         ]);
 
         if ($validator->fails()) {

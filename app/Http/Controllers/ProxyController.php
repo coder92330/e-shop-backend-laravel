@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Validator;
 use App\proxy_model;
 use App\function_model;
 use App\role_model;
+use App\log_model;
 
 class ProxyController extends APIController
 {
@@ -21,6 +22,17 @@ class ProxyController extends APIController
         $permission = $this->getPermission("view", $user);
         if($permission) {
             $proxysList = $proxyModel->all();
+
+            $log = new log_model();
+            $log->Add(
+                array(
+                    'member_id' => $user->name,
+                        'function_id'=> "Viewed Proxy",
+                    'function_param'=>"",
+                    'detail_log'=>""
+                )
+            );
+
             return [
                 "status" => 201,
                 "result" => $proxysList
@@ -51,6 +63,17 @@ class ProxyController extends APIController
             if($permission) {
                 $proxyModel = new proxy_model();
                 $proxy = $proxyModel->add($request->all());
+
+                $log = new log_model();
+                $log->Add(
+                    array(
+                        'member_id' => $user->id,
+'function_id'=> "Added Proxy",
+                        'function_param'=>request('ip'),
+                        'detail_log'=>""
+                    )
+                );
+
                 return $this->responseSuccess('Add successfully.');
             } else {
                 return [
@@ -81,6 +104,17 @@ class ProxyController extends APIController
             if($permission) {
                 $proxyModel = new proxy_model();
                 $proxy = $proxyModel->set($request['id'], $request->all());
+
+                $log = new log_model();
+                $log->Add(
+                    array(
+                        'member_id' => $user->id,
+'function_id'=> "Edited Proxy",
+                        'function_param'=>request("ip"),
+                        'detail_log'=>""
+                    )
+                );
+
                 return response()->json($proxy);
             } else {
                 return [
@@ -101,6 +135,17 @@ class ProxyController extends APIController
             if($permission) {
                 $proxyModel = new proxy_model();
                 $proxy = $proxyModel->del($request['id']);
+                
+                $log = new log_model();
+                $log->Add(
+                    array(
+                        'member_id' => $user->id,
+'function_id'=> "Deleted Proxy",
+                        'function_param'=>$proxyModel->ip,
+                        'detail_log'=>""
+                    )
+                );
+                
                 return response()->json($proxy);
             } else {
                 return [

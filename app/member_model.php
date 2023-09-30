@@ -22,10 +22,14 @@ class member_model extends Authenticatable implements JWTSubject
      * @var array
      */
     protected $fillable = [
-        'name', 'password', 'level_id', 'parent', 'id_path'
+        'name',
+        'password',
+        'level_id',
+        'parent',
+        'id_path'
     ];
 
-    protected $table="members";
+    protected $table = "members";
 
     /**
      * The attributes that should be hidden for arrays.
@@ -33,7 +37,8 @@ class member_model extends Authenticatable implements JWTSubject
      * @var array
      */
     protected $hidden = [
-        'password', 'remember_token',
+        'password',
+        'remember_token',
     ];
 
     /**
@@ -96,16 +101,19 @@ class member_model extends Authenticatable implements JWTSubject
         $this->notify(new ResetPasswordNotification($token, $user->id));
     }
 
-    public function GetMemberIdMyName($member_name){
+    public function GetMemberIdMyName($member_name)
+    {
         $member = $this->where('name', $member_name)->firstOrFail();
         return $member->id;
     }
-    public function GetMemberInfo($member_id){
+    public function GetMemberInfo($member_id)
+    {
         $member = $this->where('id', $member_id)->firstOrFail();
         return $member;
     }
-    public function setMemberInfo($member_id, $member_info){
-        if(json_encode($this->where('id', $member_id)->get()) === '[]'){
+    public function setMemberInfo($member_id, $member_info)
+    {
+        if (json_encode($this->where('id', $member_id)->get()) === '[]') {
             return [
                 'status' => 425,
                 'message' => 'Error editing.',
@@ -116,15 +124,15 @@ class member_model extends Authenticatable implements JWTSubject
         $member->level_id = $member_info['level_id'];
         $member->name = $member_info['name'];
         $member->password = Hash::make($member_info['password']);
-        if($member->parent !== $member_info['parent']){
-            $children = $this->where('id_path', 'like', "%".$member->id_path."%").orderby('level_id', 'asc').get();
-            foreach($children as $child){
+        if ($member->parent !== $member_info['parent']) {
+            $children = $this->where('id_path', 'like', "%" . $member->id_path . "%")->orderby('level_id', 'asc')->get();
+            foreach ($children as $child) {
                 $parentOfChild = $this->getParent($child->id);
-                $child->id_path = $parentOfChild->id_path."#".$parentOfChild->id;
+                $child->id_path = $parentOfChild->id_path . "#" . $parentOfChild->id;
                 $child->save();
             }
             $parent = $this->getParent($member->id);
-            $member->id_path = $parent->id_path."#".$parent->id;
+            $member->id_path = $parent->id_path . "#" . $parent->id;
             $member->save();
         }
         return [
@@ -132,14 +140,17 @@ class member_model extends Authenticatable implements JWTSubject
             'message' => 'Resource edited.',
         ];
     }
-    public function addMember($member_info, $user){
-        if($member_info['level_id'] == 1) {
+    public function addMember($member_info, $user)
+    {
+        if ($member_info['level_id'] == 1) {
             $id_path = "";
             $parent = "";
-        }
-        else {
-            $id_path = $user->id_path."#".$user->id;
-            $parent = $user->id;
+        } else {
+            $parent = $this->getMember($member_info['parent'])[0];
+            $parent = get_object_vars($parent);
+            $parent_id_path = $parent["id_path"];
+            $id_path = $parent_id_path . "#" . $member_info['parent'];
+            $parent = $member_info['parent'];
         }
         return $this->create([
             'name' => $member_info['name'],
@@ -149,8 +160,13 @@ class member_model extends Authenticatable implements JWTSubject
             'parent' => $parent
         ]);
     }
-    public function delMember($member_id){
-        if(json_encode($this->where('id', $member_id)->get()) === '[]'){
+    public function getMember($member_id)
+    {
+        return DB::table("members")->where("id", $member_id)->get();
+    }
+    public function delMember($member_id)
+    {
+        if (json_encode($this->where('id', $member_id)->get()) === '[]') {
             return [
                 'status' => 425,
                 'message' => 'Error deleting.',
@@ -163,38 +179,57 @@ class member_model extends Authenticatable implements JWTSubject
             'message' => 'Resource deleted.',
         ];
     }
-    public function getChilds($member_id){
-        $children = DB::table("members")->where("id_path", 'like', "%".$member_id."%")->get();
+    public function getChilds($member_id)
+    {
+        $children = DB::table("members")->where("id_path", 'like', "%" . $member_id . "%")->get();
         return $children;
     }
-    public function getParent($member_id){
+    public function getParent($member_id)
+    {
         $currentUser = $this->where('id', $member_id)->firstOrFail();
         $parent = $this->where('id', $currentUser->parent)->firstOrFail();
         return $parent;
     }
-    public function getParents($member_id){
+    public function getParents($member_id)
+    {
         $currentUser = $this->where('id', $member_id)->firstOrFail();
         $parentsId = explode("#", $currentUser->id_path);
-        
+
         $parents = collect([]);
-        foreach($parentsId as $parentId){
-            if(json_encode($this->where('id', $parentId)->get()) !== "[]"){
+        foreach ($parentsId as $parentId) {
+            if (json_encode($this->where('id', $parentId)->get()) !== "[]") {
                 $parents->push($this->where('id', $parentId)->firstOrFail());
             }
         }
         return $parents;
     }
-    public function delChilds($member_id){
+    public function delChilds($member_id)
+    {
         $children = DB::table("members")
-                        ->where("id_path", 'like', "%".$member_id."%")
-                        ->delete();
+            ->where("id_path", 'LIKE', "%" . $member_id . "%")
+            ->delete();
         return 1;
     }
-    public function search($info){
+    public function search($info)
+    {
         $cond = collect([]);
-        foreach($info as $key => $value){
-            $cond.push([$key, $value]);
+        foreach ($info as $key => $value) {
+            $cond . push([$key, $value]);
         }
         return $this->where(get_object_vars($cond))->get();
+    }
+
+    public function getMemberList($member_id)
+    {
+        $members = DB::table('members as m1')
+            ->select('m1.id', 'm1.name', 'm1.level_id', 'm1.parent', 'levels.name as level_name', 'm2.name as parent_name')
+            ->leftJoin('levels', 'm1.level_id', '=', 'levels.id')
+            ->leftJoin('members as m2', 'm1.parent', '=', 'm2.id')
+            ->where('m1.id_path', 'like', '%' . $member_id . '%')
+            ->get();
+        return [
+            'status' => 201,
+            'members' => $members
+        ];
     }
 }

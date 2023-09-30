@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Validator;
 use App\history_model;
 use App\function_model;
 use App\role_model;
+use App\log_model;
 
 class HistoryController extends APIController
 {
@@ -26,6 +27,16 @@ class HistoryController extends APIController
                 $historyList = $historyModel->list($request['from'], $request['to'], $request['page'], $request['limit']);
             }
             
+            $log = new log_model();
+            $log->Add(
+                array(
+                    'member_id' => $user->name,
+                        'function_id'=> 33,
+                    'function_param'=>"",
+                    'detail_log'=>""
+                )
+            );
+
             return [
                 "status" => 201,
                 "historylist" => $historyList

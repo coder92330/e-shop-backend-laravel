@@ -129,7 +129,7 @@ Route::group([
     'middleware' => 'cors',
     'prefix' => 'history'
 ], function ($router) {
-    Route::post("/", "HistoryController@indexOp");
+    Route::get("/view", "HistoryController@indexOp");
     Route::post("/add", "HistoryController@addOp");
     Route::post("/clear", "HistoryController@clear");
 });
@@ -138,7 +138,7 @@ Route::group([
     'middleware' => 'cors',
     'prefix' => 'log'
 ], function ($router) {
-    Route::post("/", "LogController@indexOp");
+    Route::get("/view", "LogController@indexOp");
     Route::post("/add", "LogController@addOp");
     Route::post("/clear", "LogController@clear");
 });
@@ -151,3 +151,6 @@ Route::group([
 // Route::get('{slug}', function () {
 //     return view('index');
 // })->where('slug', '^(?!api).*$');
+
+
+

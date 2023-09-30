@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Validator;
 use App\member_model;
 use App\function_model;
 use App\role_model;
+use App\log_model;
 
 class MemberController extends APIController
 {
@@ -16,11 +17,23 @@ class MemberController extends APIController
         if (! $user = auth()->setRequest($request)->user()) {
             return $this->responseUnauthorized();
         }
+        
         $memberModel = new member_model();
 
         $permission = $this->getPermission("view", $user);
         if($permission) {
-            $memberList = $memberModel->all();
+            $memberList = $memberModel->getMemberList($user->id);
+
+            $log = new log_model();
+            $log->Add(
+                array(
+                    'member_id' => $user->id,
+                    'function_id'=> 1,
+                    'function_param'=>"Viewed Members",
+                    'detail_log'=>""
+                )
+            );
+
             return [
                 "status" => 201,
                 "result" => $memberList
@@ -51,13 +64,24 @@ class MemberController extends APIController
                 if($permission) {
                     $memberModel = new member_model();
                     $member = $memberModel->addMember($request->all(), auth()->setRequest($request)->user());
+
+                    $log = new log_model();
+                    $log->Add(
+                        array(
+                            'member_id' => $user->name,
+                                        'function_id'=> "Registered level",
+                            'function_param'=>request('name'),
+                            'detail_log'=>""
+                        )
+                    );
+
                     return $this->responseSuccess('Registered successfully.');
                 } else {
                     return [
                         "status" => 401,
                         "message" => "Forbidden."
                     ];
-                }
+                } 
             } catch (Exception $e) {
                 return $this->responseServerError('Registration error.');
             }
@@ -81,15 +105,26 @@ class MemberController extends APIController
         if ($validator->fails()) {
             return $this->responseUnprocessable($validator->errors());
         }
-        if ($request['level_id'] > $user->level_id || $request['level_id'] === 1){
+        if ($request['level_id'] > $user->level_id || $user->level_id === 1){
             try {
                 $permission = $this->getPermission("edit", $user);
                 if($permission) {
                     $memberModel = new member_model();
                     $editMember = $memberModel->where('id', $request['id'])->firstOrFail();
                     if(strpos($editMember->id_path, $user->id) > -1){
-                        // $member = $memberModel->setMemberInfo($request['id'], $request->all());
-                        // return response()->json($member);
+                        $member = $memberModel->setMemberInfo($request['id'], $request->all());
+                        
+                        $log = new log_model();
+                        $log->Add(
+                            array(
+                                'member_id' => $user->name,
+                                                'function_id'=> "Edited Level",
+                                'function_param'=>reuest('name'),
+                                'detail_log'=>""
+                            )
+                        );
+                        
+                        return response()->json($member);
                     } else {
                         return [
                             "status" => 401,
@@ -113,17 +148,31 @@ class MemberController extends APIController
         }
     }
     public function deleteOp(Request $request){
+        $memberModel = new member_model();
         if (! $user = auth()->setRequest($request)->user()) {
             return $this->responseUnauthorized();
         }
-        if ($request['level_id'] > $user->level_id || $request['level_id'] === 1){
+        
+        if ($request['level_id'] > $user->level_id || $user->level_id === 1){
             try {
                 $permission = $this->getPermission("del", $user);
+                
                 if($permission) {
-                    $memberModel = new member_model();
+                    
                     $editMember = $memberModel->where('id', $request['id'])->firstOrFail();
                     if(strpos($editMember->id_path, $user->id) > -1){
                         $member = $memberModel->delMember($request['id']);
+
+                        $log = new log_model();
+                        $log->Add(
+                            array(
+                                'member_id' => $user->name,
+                                                'function_id'=> "Viewed Members",
+                                'function_param'=>$editMember->name,
+                                'detail_log'=>""
+                            )
+                        );
+
                         return response()->json($member);
                     } else {
                         return [
@@ -152,11 +201,12 @@ class MemberController extends APIController
             return $this->responseUnauthorized();
         }
         $memberModel = new member_model();
-        return [
-            "children" =>$memberModel->getChilds($user->id),
-            "parents" =>$memberModel->getParents($user->id),
-            "parent" =>$memberModel->getParent($user->id),
-        ];
+        // return [
+        //     "children" =>$memberModel->getChilds($user->id),
+        //     "parents" =>$memberModel->getParents($user->id),
+        //     "parent" =>$memberModel->getParent($user->id),
+        // ];
+        return $memberModel->getChilds($user->id);
     }
     public function getMemberById(Request $request){
         if (! $user = auth()->setRequest($request)->user()) {

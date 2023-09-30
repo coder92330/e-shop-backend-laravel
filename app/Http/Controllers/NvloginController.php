@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Validator;
 use App\nvlogin_model;
 use App\function_model;
 use App\role_model;
+use App\log_model;
 
 class NvloginController extends APIController
 {
@@ -21,6 +22,17 @@ class NvloginController extends APIController
         $permission = $this->getPermission("view", $user);
         if($permission) {
             $nvloginList = $nvloginModel->all();
+
+            $log = new log_model();
+            $log->Add(
+                array(
+                    'member_id' => $user->name,
+                        'function_id'=> "Viewed login",
+                    'function_param'=>"",
+                    'detail_log'=>""
+                )
+            );
+
             return [
                 "status" => 201,
                 "result" => $nvloginList
@@ -49,6 +61,17 @@ class NvloginController extends APIController
             if($permission) {
                 $nvloginModel = new nvlogin_model();
                 $nvlogin = $nvloginModel->add($request->all());
+
+                $log = new log_model();
+                $log->Add(
+                    array(
+                        'member_id' => $user->id,
+'function_id'=> "Added login",
+                        'function_param'=>request('user'),
+                        'detail_log'=>""
+                    )
+                );
+
                 return $this->responseSuccess('Add successfully.');
             } else {
                 return [
@@ -77,6 +100,17 @@ class NvloginController extends APIController
             if($permission) {
                 $nvloginModel = new nvlogin_model();
                 $nvlogin = $nvloginModel->set($request['id'], $request->all());
+
+                $log = new log_model();
+                $log->Add(
+                    array(
+                        'member_id' => $user->id,
+'function_id'=> "Edited login",
+                        'function_param'=>request('user'),
+                        'detail_log'=>""
+                    )
+                );
+
                 return response()->json($nvlogin);
             } else {
                 return [
@@ -97,6 +131,17 @@ class NvloginController extends APIController
             if($permission) {
                 $nvloginModel = new nvlogin_model();
                 $nvlogin = $nvloginModel->del($request['id']);
+
+                $log = new log_model();
+                $log->Add(
+                    array(
+                        'member_id' => $user->id,
+'function_id'=> "Deleted login",
+                        'function_param'=>$nvloginModel->user,
+                        'detail_log'=>""
+                    )
+                );
+
                 return response()->json($nvlogin);
             } else {
                 return [

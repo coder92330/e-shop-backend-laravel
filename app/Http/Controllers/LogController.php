@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\log_model;
+use App\function_model;
+use App\role_model;
 
 class LogController extends APIController
 {
@@ -37,7 +40,6 @@ class LogController extends APIController
         }
         $validator = Validator::make($request->all(), [
             'member_id' => 'required',
-            'time' => 'required',
             'function_id' => 'required',
             'function_param' => 'required',
             'detail_log' => 'required',

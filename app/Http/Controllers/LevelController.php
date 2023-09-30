@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Validator;
 use App\level_model;
 use App\function_model;
 use App\role_model;
+use App\log_model;
 
 class LevelController extends APIController
 {
@@ -16,16 +17,27 @@ class LevelController extends APIController
         if (! $user = auth()->setRequest($request)->user()) {
             return $this->responseUnauthorized();
         }
+
+        $log = new log_model();
+        $log->Add(
+            array(
+                'member_id' => $user->id,
+                'function_id'=> 0,
+                'function_param'=>"Viewed Level",
+                'detail_log'=>""
+            )
+        );
+
         if($user->level_id === 1){
             $levelModel = new level_model();
             return response()->json([
                 'status' => 201,
-                'levels' => $levelModel->getLevelList()
+                'result' => $levelModel->getLevelList()
             ]);
         } else {
             return response()->json([
                 'status' => 201,
-                'levels' => []
+                'result' => []
             ]);
         }
     }
@@ -47,6 +59,21 @@ class LevelController extends APIController
             // Warning: Data isn't being fully sanitized yet.
             try {
                 $result = $levelModel->add($request['id'], $request['name']);
+                if($result["status"]==425){
+                    
+                    $result= $this->editOp($request)->original;
+                }
+
+                $log = new log_model();
+                $log->Add(
+                    array(
+                        'member_id' => $user->id,
+                        'function_id'=> 0,
+                        'function_param'=>$request['name'],
+                        'detail_log'=>""
+                    )
+                );
+
                 return response()->json($result);
             } catch (Exception $e) {
                 return $this->responseServerError('Error creating resource.');
@@ -70,6 +97,17 @@ class LevelController extends APIController
                 if(request('permission_list')){
                     $result = $roleModel->setLevelPermissionList(request('id'), request('permission_list'));
                 }
+
+                $log = new log_model();
+                $log->Add(
+                    array(
+                        'member_id' => $user->id,
+                        'function_id'=> 0,
+                        'function_param'=>request('name'),
+                        'detail_log'=>""
+                    )
+                );
+
                 return response()->json($result);
             } catch (Exception $e) {
                 return $this->responseServerError('Error editing resource.');
@@ -83,10 +121,21 @@ class LevelController extends APIController
         if (! $user = auth()->setRequest($request)->user()) {
             return $this->responseUnauthorized();
         }
-        if($user->level_id === 1){
+        if($user->level_id === 1&&$request['id']!==1){
             $levelModel = new level_model();
             try {
                 $result = $levelModel->del($request['id']);
+
+                $log = new log_model();
+                $log->Add(
+                    array(
+                        'member_id' => $user->id,
+                         'function_id'=> 0,
+                        'function_param'=>$levelModel->getName(request('id')),
+                        'detail_log'=>""
+                    )
+                );
+
                 return response()->json($result);
             } catch (Exception $e) {
                 return $this->responseServerError('Error deleting resource.');

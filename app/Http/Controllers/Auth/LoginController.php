@@ -8,9 +8,13 @@ use DateTime;
 
 use App\member_model;
 use App\level_model;
+use App\log_model;
+
+use Carbon\Carbon;
 
 class LoginController extends ApiController
 {
+
 
     public function indexOp(Request $request){
         if (! $user = auth()->setRequest($request)->user()) {
@@ -38,6 +42,16 @@ class LoginController extends ApiController
         $me->last_login = $today->format("Y-m-d H:i:s");
         $me->save();
 
+
+        $log = new log_model();
+        $log->Add(
+            array(
+                'member_id' => $user->id,
+                'function_id'=> 100,
+                'function_param'=>"Logged in",
+                'detail_log'=>""
+            )
+        );
         return response()->json([
             'status' => 200,
             'message' => 'Authorized.',
@@ -45,7 +59,7 @@ class LoginController extends ApiController
             'token_type' => 'bearer',
             'expires_in' => auth()->factory()->getTTL() * 60,
             'user' => array(
-                'id' => $user->hashid,
+                'id' => $user->id,
                 'name' => $user->name,
                 'level_id' => $user->level_id,
                 'role' => $levelModel->getLevelById($user->level_id)

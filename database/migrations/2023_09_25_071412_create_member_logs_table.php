@@ -16,10 +16,9 @@ class CreateMemberLogsTable extends Migration
         Schema::create('member_logs', function (Blueprint $table) {
             $table->id();
             $table->Integer('member_id');
-            $table->dateTime('time');
             $table->Integer('function_id');
-            $table->String('function_param');
-            $table->String('detail_log');
+            $table->String('function_param')->nullable();
+            $table->String('detail_log')->nullable();
             $table->timestamps();
         });
     }

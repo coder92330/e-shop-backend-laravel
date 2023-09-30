@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Validator;
 use App\goods_model;
 use App\function_model;
 use App\role_model;
+use App\log_model;
+
 
 class GoodsController extends APIController
 {
@@ -21,6 +23,16 @@ class GoodsController extends APIController
         $permission = $this->getPermission("view", $user);
         if($permission) {
             $goodsList = $goodsModel->all();
+
+            $log = new log_model();
+        $log->Add(
+            array(
+                'member_id' => $user->id,
+                'function_id'=> 5,
+                'function_param'=>"",
+                'detail_log'=>""
+            )
+        );
             return [
                 "status" => 201,
                 "result" => $goodsList
@@ -36,7 +48,8 @@ class GoodsController extends APIController
         if (! $user = auth()->setRequest($request)->user()) {
             return $this->responseUnauthorized();
         }
-        $validator = Validator::make($request->all(), [
+        $req_arr=$request->all();
+        $validator = Validator::make($req_arr, [
             'name' => 'required|string|max:255',
             'nvid' => 'required|string|unique:goods',
             'keyword1' => 'required|string',
@@ -51,7 +64,18 @@ class GoodsController extends APIController
             $permission = $this->getPermission("add", $user);
             if($permission) {
                 $goodsModel = new goods_model();
-                $good = $goodsModel->add($request->all());
+                $good = $goodsModel->add($req_arr);
+
+                $log = new log_model();
+                $log->Add(
+                    array(
+                        'member_id' => $user->id,
+                         'function_id'=> 6,
+                        'function_param'=>$req_arr['name'].$req_arr['nvid'],
+                        'detail_log'=>""
+                    )
+                );
+
                 return $this->responseSuccess('Add successfully.');
             } else {
                 return [
@@ -67,7 +91,8 @@ class GoodsController extends APIController
         if (! $user = auth()->setRequest($request)->user()) {
             return $this->responseUnauthorized();
         }
-        $validator = Validator::make($request->all(), [
+        $req_arr=$equest->all();
+        $validator = Validator::make($req_arr, [
             'name' => 'required|string|max:255',
             'nvid' => 'required|string',
             'keyword1' => 'required|string',
@@ -78,11 +103,23 @@ class GoodsController extends APIController
         if ($validator->fails()) {
             return $this->responseUnprocessable($validator->errors());
         }
+        //TO-DO-make-nvid-unique
         try {
             $permission = $this->getPermission("edit", $user);
             if($permission) {
                 $goodsModel = new goods_model();
-                $good = $goodsModel->set($request['id'], $request->all());
+                $good = $goodsModel->set($request['id'], $req_arr);
+
+                $log = new log_model();
+                $log->Add(
+                    array(
+                        'member_id' => $user->id,
+                         'function_id'=> 7,
+                        'function_param'=>$req_arr['name'].$req_arr['nvid'],
+                        'detail_log'=>""
+                    )
+                );
+
                 return response()->json($good);
             } else {
                 return [
@@ -103,6 +140,18 @@ class GoodsController extends APIController
             if($permission) {
                 $goodsModel = new goods_model();
                 $good = $goodsModel->del($request['id']);
+                $good=$goodsModel->get($request['id']);
+
+                $log = new log_model();
+                $log->Add(
+                    array(
+                        'member_id' => $user->id,
+                        'function_id'=> 8,
+                        'function_param'=>$good['good']['name'],
+                        'detail_log'=>""
+                    )
+                );
+
                 return response()->json($good);
             } else {
                 return [

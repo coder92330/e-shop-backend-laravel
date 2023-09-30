@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Validator;
 use App\machine_model;
 use App\function_model;
 use App\role_model;
+use App\log_model;
 
 class MachineController extends APIController
 {

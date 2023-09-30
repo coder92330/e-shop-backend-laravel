@@ -64,8 +64,8 @@ class nvlogin_model extends Model
     }
     public function del($id){
         $nvlogin = $this->where('id', $id)->delete();
-        $jobModel = new job_model();
-        $jobModel->unsetLogin($id);
+        // $jobModel = new job_model();
+        // $jobModel->unsetLogin($id);
         return [
             'status' => 201,
             'message' => 'Resource deleted.',

@@ -9,6 +9,7 @@ use App\Http\Controllers\APIController;
 use App\browser_model;
 use App\function_model;
 use App\role_model;
+use App\log_model;
 
 class BrowserController extends APIController
 {
@@ -16,11 +17,24 @@ class BrowserController extends APIController
         if (! $user = auth()->setRequest($request)->user()) {
             return $this->responseUnauthorized();
         }
+
+        
         $browserModel = new browser_model();
 
         $permission = $this->getPermission("view", $user);
         if($permission) {
             $browserList = $browserModel->all();
+
+            $log = new log_model();
+            $log->Add(
+            array(
+                'member_id' => $user->id,
+                'function_id'=> 17,
+                'function_param'=> "Viewed Browser page",
+                'detail_log'=>""
+            )
+        );
+
             return [
                 "status" => 201,
                 "result" => $browserList
@@ -33,10 +47,11 @@ class BrowserController extends APIController
         }
     }
     public function addOp(Request $request){
+        $req_arr = $request->all();
         if (! $user = auth()->setRequest($request)->user()) {
             return $this->responseUnauthorized();
         }
-        $validator = Validator::make($request->all(), [
+        $validator = Validator::make($req_arr, [
             'name' => 'required|string',
             'agent' => 'required|string',
         ]);
@@ -48,7 +63,18 @@ class BrowserController extends APIController
             $permission = $this->getPermission("add", $user);
             if($permission) {
                 $browserModel = new browser_model();
-                $browser = $browserModel->add($request->all());
+                $browser = $browserModel->add($req_arr);
+
+                $log = new log_model();
+                $log->Add(
+                    array(
+                        'member_id' => $user->id,
+                        'function_id'=> 17,
+                        'function_param'=>implode(" ",$req_arr),
+                        'detail_log'=>""
+                    )
+                );
+
                 return $this->responseSuccess('Add successfully.');
             } else {
                 return [
@@ -61,13 +87,17 @@ class BrowserController extends APIController
         }
     }
     public function editOp(Request $request){
+
+        $req_arr=$request->all();
         if (! $user = auth()->setRequest($request)->user()) {
             return $this->responseUnauthorized();
         }
-        $validator = Validator::make($request->all(), [
+        $validator = Validator::make($req_arr, [
             'name' => 'required|string',
             'agent' => 'required|string'
         ]);
+
+        
 
         if ($validator->fails()) {
             return $this->responseUnprocessable($validator->errors());
@@ -76,8 +106,17 @@ class BrowserController extends APIController
             $permission = $this->getPermission("edit", $user);
             if($permission) {
                 $browserModel = new browser_model();
-                $browser = $browserModel->set($request['id'], $request->all());
-                $logModel = new log_model();
+                $browser = $browserModel->set($request['id'], $req_arr);
+                // $logModel = new log_model();
+                $log = new log_model();
+                $log->Add(
+                    array(
+                        'member_id' => $user->id,
+                        'function_id'=> 19,
+                        'function_param'=>implode(" ",$req_arr),
+                        'detail_log'=>""
+                    )
+                );
                 return response()->json($browser);
             } else {
                 return [
@@ -98,6 +137,16 @@ class BrowserController extends APIController
             if($permission) {
                 $browserModel = new browser_model();
                 $browser = $browserModel->del($request['id']);
+
+                $log = new log_model();
+                $log->Add(
+                    array(
+                        'member_id' => $user->id,
+                        'function_id'=> 20,
+                        'function_param'=>implode(" ",$request->all()),
+                        'detail_log'=>""
+                    )
+                );
                 return response()->json($browser);
             } else {
                 return [

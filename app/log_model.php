@@ -6,6 +6,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
+use DateTime;
+
+use Carbon\Carbon;
+
 class log_model extends Model
 {
     use HasFactory;
@@ -13,16 +17,16 @@ class log_model extends Model
         'member_id',
         'time',
         'function_id',
-        'function_params',
+        'function_param',
         'detail_log'
     ];
     protected $table="member_logs";
     
-    public function list($from, $to, $page, $limit){
+    public function list($from="2020-09-28 18:40:15", $to="2030-09-28 18:40:15", $page, $limit){
         $member_logList = DB::table("member_logs")
         ->where([
-            ['time', '>', $from],
-            ['time', '<', $to]
+            ['created_at', '>', $from],
+            ['created_at', '<', $to]
         ])
         ->offset($page*$limit)->limit($limit)->get();
         return [
@@ -65,7 +69,7 @@ class log_model extends Model
     public function add($info){
         $this->create([
             'member_id' => $info['member_id'],
-            'time' => $info['time'],
+            
             'function_id' => $info['function_id'],
             'function_param' => $info['function_param'],
             'detail_log' => $info['detail_log'],
